@@ -1,0 +1,26 @@
+<header>
+    <div class="bg-primary">
+        <div class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" ui-sref="app.home"><i class="fa fa-fw fa-github-alt fs-20 c-white"></i></a>
+                </div>
+                <div class="navbar-text m-l-0 text-uppercase c-white">{{appConfig.name}} {{appConfig.version}}</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- This ui-view will hold our individual route view templates. -->
+<div ui-view></div>
+
+<footer class="bg-lightgray">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 p-v-15 text-right c-primary font-light fs-12 inline-children">
+                <div>{{appConfig.name}}.</div>
+                <div>{{appConfig.license}}.</div>
+            </div>
+        </div>
+    </div>
+</footer>

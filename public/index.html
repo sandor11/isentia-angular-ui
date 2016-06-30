@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html ng-app="webApp">
+    <head>
+        <base href="/">
+        <title>Isentia Angular Puzzler</title>
+        <meta charset="UTF-8">
+        <meta name="fragment" content="!">
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+        
+        <!-- AngularBootstrapWebCSS -->
+        <link href="css/release/vendor-all.min.css" rel="stylesheet">
+        <link href="css/release/angular-bootstrap-web.min.css" rel="stylesheet">
+        
+        <!-- AngularBootstrapWebJS -->
+        <script type="text/javascript" src="js/release/vendor-all.js"></script>
+        <script type="text/javascript" src="js/release/angular-bootstrap-web.js"></script>
+    </head>
+    <body>
+        <!-- This ui-view will hold our entire app. 
+            The file loaded into here comes from public/views/components/app/app.html
+            and inside that file will be the header/footer and another ui-view container for
+            the individual view content to be loaded into.
+        
+            The reason for this is so the app can inherit its scope from a common parent, without
+            its common parent being the root scope. This helps to keep the root scope un cluttered.
+        -->
+        <div ui-view></div>
+    </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "isentia-angular-challenge",
+  "version": "0.0.1",
+  "ignore": [
+    ".jshintrc",
+    "**/*.txt"
+  ],
+  "dependencies": {
+    "angular": "^1.5.5",
+    "bootstrap": "^3.3.6",
+    "moment": "^2.13.0",
+    "angular-ui-router": "^0.3.0",
+    "angular-bootstrap": "^1.3.3",
+    "font-awesome": "^4.6.3",
+    "animate.css": "^3.5.1",
+    "source-sans-pro": "git://github.com/adobe-fonts/source-sans-pro.git#release"
+  },
+  "devDependencies": {},
+  "resolutions": {
+    "angular-ui-router": "^0.3.0",
+    "angular": "^1.5.5"
+  }
+}
