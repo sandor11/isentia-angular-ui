@@ -41,6 +41,7 @@ angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout'
     );
 angular.module('webApp').controller('appController', ['$scope',
     function($scope) {
+        $scope.test = 'hello';
     }
 ]); 
 angular.module('webApp').controller('puzzleController', ['$scope',

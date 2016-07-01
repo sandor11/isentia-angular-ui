@@ -15,7 +15,9 @@
     "animate.css": "^3.5.1",
     "source-sans-pro": "git://github.com/adobe-fonts/source-sans-pro.git#release"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "angular-mocks": "^1.5.7"
+  },
   "resolutions": {
     "angular-ui-router": "^0.3.0",
     "angular": "^1.5.5"
