@@ -1,4 +1,7 @@
-angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout',
+(function(angular) {
+    'use strict';
+    
+    angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout',
         function ($rootScope, $timeout) {
             return {
                 restrict: 'A',
@@ -12,3 +15,4 @@ angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout'
             };
         }]
     );
+})(window.angular);

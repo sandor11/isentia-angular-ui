@@ -1,4 +1,7 @@
-angular.module('webApp').directive('puzzle', ['$rootScope', '$timeout',
+(function(angular) {
+    'use strict';
+
+    angular.module('webApp').directive('puzzle', ['$rootScope', '$timeout',
         function ($rootScope, $timeout) {
             return {
                 restrict: 'E',
@@ -29,3 +32,4 @@ angular.module('webApp').directive('puzzle', ['$rootScope', '$timeout',
             };
         }]
     );
+})(window.angular);

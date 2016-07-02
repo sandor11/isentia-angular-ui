@@ -59,7 +59,7 @@ puzzle {
 puzzle > img {
   display: block;
   margin: 0 auto;
-  width: 560px;
+  width: 540px;
 }
 .grid.grid-p-v-15 > [class^="col-"] {
   padding-top: 15px;

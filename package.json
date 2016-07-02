@@ -4,7 +4,8 @@
   "author": "Sandor Agafonoff",
   "license": "MIT",
   "scripts": {
-    "dev": "lite-server",
+    "browser": "lite-server",
+    "dev": "grunt watch",
     "postinstall": "bower install && grunt release && grunt watch",
     "test": "karma start"
   },

@@ -1,31 +1,38 @@
-var webApp = angular.module('webApp', ['ui.router', 'ui.bootstrap']);
+(function(angular) {
+    'use strict';
+    
+    var webApp = angular.module('webApp', ['ui.router', 'ui.bootstrap']);
 
-webApp.factory('appConfig', [function () {
-        function getEnv() {
-            return 'development';
-        }
-
-        var schemas = {
-            production: {
-            },
-            development: {
-                name: 'isentia-angular-challenge',
-                version: '0.0.1',
-                author: 'Sandor Agafonoff',
-                license: 'MIT License'
+    webApp.factory('appConfig', [function () {
+            function getEnv() {
+                return 'development';
             }
-        };
 
-        return schemas[getEnv()];
-    }
-]);
+            var schemas = {
+                production: {
+                },
+                development: {
+                    name: 'isentia-angular-challenge',
+                    version: '0.0.1',
+                    author: 'Sandor Agafonoff',
+                    license: 'MIT License'
+                }
+            };
 
-webApp.run(['$location', '$state', '$rootScope', '$timeout', '$window', 'appConfig',
-    function ($location, $state, $rootScope, $timeout, $window, appConfig) {        
-        $rootScope.appConfig = appConfig;
-    }
-]);
-angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout',
+            return schemas[getEnv()];
+        }
+    ]);
+
+    webApp.run(['$location', '$state', '$rootScope', '$timeout', '$window', 'appConfig',
+        function ($location, $state, $rootScope, $timeout, $window, appConfig) {        
+            $rootScope.appConfig = appConfig;
+        }
+    ]);
+})(window.angular);
+(function(angular) {
+    'use strict';
+    
+    angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout',
         function ($rootScope, $timeout) {
             return {
                 restrict: 'A',
@@ -39,19 +46,31 @@ angular.module('webApp').directive('ngRepeatComplete', ['$rootScope', '$timeout'
             };
         }]
     );
-angular.module('webApp').controller('appController', ['$scope',
-    function($scope) {
-        $scope.test = 'hello';
-    }
-]); 
-angular.module('webApp').controller('puzzleController', ['$scope', '$rootScope',
-    function($scope, $rootScope) {
-        $scope.start = function() {
-            $rootScope.$broadcast('puzzle.start');
+})(window.angular);
+(function(angular) {
+    'use strict';
+
+    angular.module('webApp').controller('appController', ['$scope',
+        function($scope) {
+            $scope.test = 'hello';
         }
-    }
-]); 
-angular.module('webApp').directive('puzzle', ['$rootScope', '$timeout',
+    ]); 
+})(window.angular);
+(function(angular) {
+    'use strict';
+
+    angular.module('webApp').controller('puzzleController', ['$scope', '$rootScope',
+        function($scope, $rootScope) {
+            $scope.start = function() {
+                $rootScope.$broadcast('puzzle.start');
+            }
+        }
+    ]);
+})(window.angular);
+(function(angular) {
+    'use strict';
+
+    angular.module('webApp').directive('puzzle', ['$rootScope', '$timeout',
         function ($rootScope, $timeout) {
             return {
                 restrict: 'E',
@@ -82,22 +101,27 @@ angular.module('webApp').directive('puzzle', ['$rootScope', '$timeout',
             };
         }]
     );
-angular.module('webApp').config(['$stateProvider', '$urlRouterProvider', '$locationProvider',
-    function ($stateProvider, $urlRouterProvider, $locationProvider) {
-        $urlRouterProvider.otherwise('/');
-        
-        $stateProvider
-                .state('app', {
-                    abstract: true,
-                    templateUrl: './views/components/app/app.html',
-                    controller: 'appController'
-                })
-                .state('app.puzzle', {
-                    url: '/',
-                    templateUrl: './views/components/puzzle/puzzle.html',
-                    controller: 'puzzleController'
-                });
+})(window.angular);
+(function(angular) {
+    'use strict';
+    
+    angular.module('webApp').config(['$stateProvider', '$urlRouterProvider', '$locationProvider',
+        function ($stateProvider, $urlRouterProvider, $locationProvider) {
+            $urlRouterProvider.otherwise('/');
+            
+            $stateProvider
+                    .state('app', {
+                        abstract: true,
+                        templateUrl: './views/components/app/app.html',
+                        controller: 'appController'
+                    })
+                    .state('app.puzzle', {
+                        url: '/',
+                        templateUrl: './views/components/puzzle/puzzle.html',
+                        controller: 'puzzleController'
+                    });
 
-        $locationProvider.html5Mode(true);
-    }
-]);
+            $locationProvider.html5Mode(true);
+        }
+    ]);
+})(window.angular);
