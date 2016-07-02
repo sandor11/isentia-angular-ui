@@ -24,7 +24,7 @@
                     this.img.onload = this.createPieces.bind(this);
 
                     // image display settings
-                    this.img.className = 'width-100';
+                    this.img.style.width = this.width + 'px';
                     this.img.src = this.board;
                 }
 
@@ -33,7 +33,7 @@
                     this.container = angular.element('<div />');
                     this.container[0].style.width = this.width + 'px';
                     this.container[0].style.height = this.width + 'px';
-                    this.container[0].className = 'm-0-auto';
+                    this.container[0].className = 'm-0-auto fs-0';
                 }
 
                 this.createPieces = function() {
@@ -42,7 +42,9 @@
                         width: size,
                         height: size
                     };
-                    for(var i = 0; i < this.pieces; i++) {
+                    var currentRow = 0;
+                    var currentCol = 0;
+                    for(var i = 1; i <= this.pieces; i++) {
                         // create an individual puzzle piece
                         var div = angular.element('<div />');
                         div[0].style.width = piece.width + 'px';
@@ -50,11 +52,26 @@
                         div[0].className = 'inline-block';
 
                         // clone our image into the puzzle piece
-                        div.append($(this.img).clone());
+                        div[0].style.backgroundImage = 'url(' + this.board + ')';
+                        div[0].style.backgroundRepeat = 'no-repeat';
+                        div[0].style.backgroundSize = this.width + 'px ' + this.width + 'px';
+
+                        var horiz = currentCol * piece.width;
+                        var vert = currentRow * piece.height;
+                        div[0].style.backgroundPosition = '-' + horiz + 'px ' + '-' + vert + 'px';
+
+                        //div.append($(this.img).clone());
 
                         // add the piece to our holding container
                         this.container.append(div);
                         this.startingOrder.push(div);
+                        if (i && (i % 3 === 0)) {
+                            currentRow++;
+                            currentCol = 0;
+                        }
+                        else {
+                            currentCol++;
+                        }
                     }
                 }
             }
