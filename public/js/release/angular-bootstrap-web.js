@@ -61,9 +61,37 @@
 
     angular.module('webApp').controller('puzzleController', ['$scope', '$rootScope',
         function($scope, $rootScope) {
+            $scope.moves = 0;
+            $scope.playing = false;
+            $scope.complete = false;
+            $scope.continue = false;
+
             $scope.start = function() {
-                $rootScope.$broadcast('puzzle.start');
+                var shuffle = $scope.complete;                
+                $rootScope.$broadcast('puzzle.start', shuffle);
+                $scope.playing = true;
+                $scope.complete = false;
+                if (!$scope.continue) {
+                    $scope.moves = 0;
+                }
             }
+
+            $scope.$on('puzzle.move', function(event, moves) {
+                $scope.$apply(function() {$scope.moves = moves;});
+            });
+
+            $scope.$on('puzzle.retrieved', function(event, moves) {
+                $scope.moves = moves;
+                $scope.continue = true;
+            });
+
+            $scope.$on('puzzle.complete', function(event) {
+                $scope.$apply(function() {
+                    $scope.complete = true;
+                    $scope.playing = false;
+                    $scope.continue = false;
+                });
+            });
         }
     ]);
 })(window.angular);
@@ -95,12 +123,14 @@
                     var src = $attr.board;
 
                     var puzzle = puzzleFactory.instance(rows, pieces, width, src);
-                    var container = puzzle.generate();
-                    $element.append(container);
+                    $element.append(puzzle.getContainer());                    
 
                     // test code for an explode effect to begin the puzzle game
-                    $scope.$on('puzzle.start', function() {
-                        puzzle.shuffle();
+                    $scope.$on('puzzle.start', function(event, shuffle) {
+                        if (shuffle) {
+                            puzzle.shuffle();
+                        }
+                        puzzle.start();
                     });
                 }
             };
@@ -110,97 +140,244 @@
 (function(angular, $) {
     'use strict';
 
-    angular.module('webApp').factory('puzzleFactory', ['$rootScope',
-        function($rootScope) {
+    angular.module('webApp').factory('puzzleFactory', ['$rootScope', '$window',
+        function($rootScope, $window) {
             function Puzzle(rows, pieces, width, board) {
                 // our puzzle attributes
                 this.rows = rows;
                 this.pieces = pieces;
                 this.width = width;
                 this.board = board;
+	            this.size = this.width / this.rows;
 
                 // our working DOM items and data
                 this.container = null;
-                this.img = null;
                 this.startingOrder = [];
+                this.shuffledOrder = [];
+                this.moves = 0;
 
-                this.createBoard = function() {
-                    // create our image to be applied to each piece
-                    this.img = angular.element('<img />')[0];
-
-                    // we will define an onload event which will trigger the creation
-                    // of our individual pieces
-                    this.img.onload = this.createPieces.bind(this);
-
-                    // image display settings
-                    this.img.style.width = this.width + 'px';
-                    this.img.src = this.board;
+                this.getContainer = function() {
+                    return this.container;
                 }
 
-                this.createContainer = function() {
-                    // create holding container for our puzzle pieces
-                    this.container = angular.element('<div />');
-                    this.container[0].style.width = this.width + 'px';
-                    this.container[0].style.height = this.width + 'px';
-                    this.container[0].className = 'm-0-auto fs-0';
+                /**
+                 * Save the state of our game, including the current number of moves
+                 * and current board positons of our puzzle pieces
+                 */
+                this.save = function() {
+                    var positions = [];
+                    // take a snapshot of our current board state
+                    var currentBoard = [].slice.call(this.container[0].children);
+                    currentBoard.forEach(function(current) {
+                        // check the position of each piece against the starting order
+                        // so we can reinstate the pieces position from its location 
+                        // in the start order
+                        var shuffledPosition = this.startingOrder.indexOf(current);
+                        positions.push(shuffledPosition);
+                    }, this);
+                    var state = {
+                        positions: positions,
+                        moves: this.moves
+                    }
+                    $window.localStorage['isentia.puzzle'] = JSON.stringify(state);
                 }
 
-                this.createPieces = function() {
-                    var size = this.width / this.rows;
-                    var piece = {
-                        width: size,
-                        height: size
-                    };
-                    var currentRow = 0;
-                    var currentCol = 0;
-                    for(var i = 1; i <= this.pieces; i++) {
-                        // create an individual puzzle piece
-                        var div = angular.element('<div />');
-                        div[0].style.width = piece.width + 'px';
-                        div[0].style.height = piece.height + 'px';
-                        div[0].className = 'inline-block';
+                /**
+                 * Retrieve the state of our game from local storage and apply
+                 * the previous data to our game board
+                 */
+                this.retrieve = function() {
+                    var state = JSON.parse($window.localStorage['isentia.puzzle']);
+                    this.moves = state.moves;
+                    this.createPieceOrder(state.positions);
+                    this.position();
+                }
 
-                        // clone our image into the puzzle piece
-                        div[0].style.backgroundImage = 'url(' + this.board + ')';
-                        div[0].style.backgroundRepeat = 'no-repeat';
-                        div[0].style.backgroundSize = this.width + 'px ' + this.width + 'px';
+                /**
+                 * Order our pieces according to our saved positions
+                 */
+                this.createPieceOrder = function(positions) {
+                    this.shuffledOrder = [];
+                    for(var i = 0; i < this.startingOrder.length; i++) {
+                        var pos = positions[i];
+                        var item = this.startingOrder[pos];
+                        this.shuffledOrder.push(item);
+                    }
+                }
 
-                        var horiz = currentCol * piece.width;
-                        var vert = currentRow * piece.height;
-                        div[0].style.backgroundPosition = '-' + horiz + 'px ' + '-' + vert + 'px';
+                /**
+                 * Notify that a move has been made
+                 */
+                this.notifyMoveCompleted = function() {
+                    var broadcastMoves = this.moves;
+                    $rootScope.$broadcast('puzzle.move', broadcastMoves);
+                }
+            }
 
-                        //div.append($(this.img).clone());
+            /**
+             * Create holding container <ul> for our puzzle pieces
+             */
+            Puzzle.prototype.createContainerElement = function() {
+                this.container = angular.element('<ul/>');
+                this.container[0].style.width = this.width + 'px';
+                this.container[0].style.height = this.width + 'px';
+                this.container[0].className = 'puzzle-board list-unstyled m-0-auto fs-0';
+                return this.container;
+            }
 
-                        // add the piece to our holding container
-                        this.container.append(div);
-                        this.startingOrder.push(div);
-                        if (i && (i % 3 === 0)) {
-                            currentRow++;
-                            currentCol = 0;
-                        }
-                        else {
-                            currentCol++;
-                        }
+            /**
+             * Create our puzzle grid
+             */
+            Puzzle.prototype.createPieces = function() {
+                var currentRow = 0;
+                var currentCol = 0;
+                for(var i = 1; i <= this.pieces; i++) {
+                    // get our background positions for the current grid position
+                    var horiz = currentCol * this.size;
+                    var vert = currentRow * this.size;
+
+                    // create our puzzle piece
+                    var li = this.createPieceElement(i, horiz, vert);
+
+                    // add the piece to our holding container
+                    //this.container.append(li);
+
+                    // add to the starting order for comparison during the game
+                    this.startingOrder.push(li[0]);
+                    this.shuffledOrder.push(li[0]);
+
+                    // work out next grid position
+                    if (i && (i % this.rows === 0)) {
+                        currentRow++;
+                        currentCol = 0;
+                    }
+                    else {
+                        currentCol++;
                     }
                 }
             }
 
+            /**
+             * Create puzzle piece elements <li>
+             */
+            Puzzle.prototype.createPieceElement = function(order, horiz, vert) {
+                // create an individual puzzle piece
+                var li = angular.element('<li />');
+                li[0].style.width = this.size + 'px';
+                li[0].style.height = this.size + 'px';
+                li[0].className = 'order-' + order + ' puzzle-piece inline-block area-clickable';
+
+                // posiziton our image mask
+                li[0].style.backgroundImage = 'url(' + this.board + ')';
+                li[0].style.backgroundRepeat = 'no-repeat';
+                li[0].style.backgroundSize = this.width + 'px ' + this.width + 'px';
+                li[0].style.backgroundPosition = '-' + horiz + 'px ' + '-' + vert + 'px';
+                return li;
+            }
+
+            /**
+             * Creates and returns a <div> container which holds our puzzle pieces
+             */
             Puzzle.prototype.generate = function() {
-                this.createContainer();
-                this.createBoard();
+                this.createContainerElement();
+                this.createPieces();
                 return this.container;
             }
 
+            /**
+             * Shuffle our board pieces
+             */
             Puzzle.prototype.shuffle = function() {
-                var el = this.container[0];
-                for (var i = el.children.length; i >= 0; i--) {
-                    el.appendChild(el.children[Math.random() * i | 0]);
+                randomize(this.shuffledOrder);
+
+                for (var i = 0; i < this.shuffledOrder.length; i++) {
+                    this.container[0].appendChild(this.shuffledOrder[i]);
                 }
+            }
+
+            /**
+             * Code snippet for randomizing array (https://css-tricks.com/snippets/javascript/shuffle-array/)
+             */
+            function randomize(o) {
+                for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+                return o;
+            };
+
+            /**
+             * Position our pieces from where we saved last
+             */
+            Puzzle.prototype.position = function() {
+                for (var i = 0; i < this.shuffledOrder.length; i++) {
+                    this.container[0].appendChild(this.shuffledOrder[i]);
+                }
+            }
+
+            Puzzle.prototype.start = function() {
+                // apply jQuery sortable to our puzzle board
+                // enables drag and drop plus element sorting
+                $('.puzzle-board').sortable({
+                    revert: true,
+                    stop: this.move.bind(this) // we must check the new order agains our start order
+                });
+                $('.puzzle-board').disableSelection();
+            }
+
+            /**
+             * Called from our jQuery sortable stop event. Will give us the
+             * right timing to test our DOM structure for puzzle completion
+             */
+            Puzzle.prototype.move = function(event, ui) {
+                // add move count
+                this.moves++;
+                this.notifyMoveCompleted();
+
+                // save our state here since a move was completed
+                this.save();
+
+                // check if puzzle has been completed and cancel sorting
+                // operations if it has
+                if (this.complete()) {
+                    // reset our internals
+                    this.moves = 0;
+                    $window.localStorage.removeItem('isentia.puzzle');
+
+                    // disable dragging/sorting
+                    $('.puzzle-board').sortable('destroy');
+
+                    // notify puzzle completion
+                    $rootScope.$broadcast('puzzle.complete');
+                }
+            }
+
+            /**
+             * Check puzzle for completeness. We can simply check the object
+             * references for each array element since we added references
+             * to the real DOM nodes in our start order, and our shuffledOrder
+             * simply references the real DOM nodes collection post sort
+             */
+            Puzzle.prototype.complete = function() {
+                for (var i = 0; i < this.startingOrder.length; i++) {
+                    if (this.container[0].children[i] !== this.startingOrder[i]) {
+                        return false;
+                    }
+                }
+                return true;
             }
 
             return {
                 instance: function(rows, pieces, width, board) {
-                    return new Puzzle(rows, pieces, width, board);
+                    var puzzle = new Puzzle(rows, pieces, width, board);
+                    puzzle.generate();
+                    if ($window.localStorage['isentia.puzzle']) {
+                        // resotre the puzzle piece order from previously save positions
+                        puzzle.retrieve();
+                        $rootScope.$broadcast('puzzle.retrieved', puzzle.moves);
+                    }
+                    else {
+                        // shuffle a new puzzle
+                        puzzle.shuffle();
+                    }
+                    return puzzle;
                 }
             };
         }

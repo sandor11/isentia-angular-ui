@@ -1,17 +1,31 @@
 <div class="bg-primary-light">
-    <div class="container-fluid text-center fs-26 c-white font-light p-v-20">Your Challenge: Drag and drop the images on the right to match the given image.</div>
+    <div class="container-fluid text-center fs-26 c-white font-light p-v-20">
+        <span ng-show="!complete">Your Challenge: Drag and drop the images on the right to match the given image.</span>
+        <span ng-show="complete">Congratulations! You solved the puzzle with a total of {{moves}} moves.</span>
+    </div>
 </div>
 <div class="container-fluid">
     <div class="row">
         <div class="col-lg-3">
             <div class="p-50">
                 <img src="img/isentia.jpg" alt="Puzzle Clue" class="width-100 box-shadow-1" />
-                <div class="btn btn-secondary btn-block fs-18 font-light m-t-30 p-v-20 area-clickable" ng-click="start()">Start Game</div>
+                <div class="btn btn-secondary btn-block fs-18 font-light m-t-30 p-v-20 area-clickable" ng-class="{'disabled': playing}" ng-click="start()">
+                    <span ng-show="!continue || complete">Start Game</span>
+                    <span ng-show="continue && !complete">Continue Game</span>
+                </div>
             </div>
         </div>
         <div class="col-lg-9">
             <div class="p-50 text-center">
+                <!-- this is our puzzle board. Puzzle directive will only accept this as an element.
+                        attributes:
+                            board: our image asset which will be broken up
+                            rows: the number of rows/cols there will be (we are creating a square puzzle for this edition)
+                            pieces: how many pieces the puzzle will have (must be the square of the rows in this edition)
+                            width: must be equally divisble by the rows value (i.e. no remainder)
+                -->
                 <puzzle board="img/isentia.jpg" rows="3" pieces="9" width="540"></puzzle>
+                <div class="m-t-15 font-bold text-uppercase fs-24" ng-show="playing">Total Moves: {{moves}}</div>
             </div>
         </div>
     </div>

@@ -26,12 +26,14 @@
                     var src = $attr.board;
 
                     var puzzle = puzzleFactory.instance(rows, pieces, width, src);
-                    var container = puzzle.generate();
-                    $element.append(container);
+                    $element.append(puzzle.getContainer());                    
 
                     // test code for an explode effect to begin the puzzle game
-                    $scope.$on('puzzle.start', function() {
-                        puzzle.shuffle();
+                    $scope.$on('puzzle.start', function(event, shuffle) {
+                        if (shuffle) {
+                            puzzle.shuffle();
+                        }
+                        puzzle.start();
                     });
                 }
             };
