@@ -6,7 +6,7 @@
   "scripts": {
     "browser": "lite-server",
     "dev": "grunt watch",
-    "postinstall": "bower install && grunt release && grunt watch",
+    "postinstall": "bower install && grunt release && lite-server",
     "test": "karma start"
   },
   "dependencies": {},
