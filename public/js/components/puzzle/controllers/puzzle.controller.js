@@ -4,6 +4,7 @@
     angular.module('webApp').controller('puzzleController', ['$scope', '$rootScope',
         function($scope, $rootScope) {
             $scope.moves = 0;
+            $scope.time = '';
             $scope.playing = false;
             $scope.complete = false;
             $scope.continue = false;
@@ -27,11 +28,12 @@
                 $scope.continue = true;
             });
 
-            $scope.$on('puzzle.complete', function(event) {
+            $scope.$on('puzzle.complete', function(event, time) {
                 $scope.$apply(function() {
                     $scope.complete = true;
                     $scope.playing = false;
                     $scope.continue = false;
+                    $scope.time = time;
                 });
             });
         }

@@ -62,6 +62,7 @@
     angular.module('webApp').controller('puzzleController', ['$scope', '$rootScope',
         function($scope, $rootScope) {
             $scope.moves = 0;
+            $scope.time = '';
             $scope.playing = false;
             $scope.complete = false;
             $scope.continue = false;
@@ -85,11 +86,12 @@
                 $scope.continue = true;
             });
 
-            $scope.$on('puzzle.complete', function(event) {
+            $scope.$on('puzzle.complete', function(event, time) {
                 $scope.$apply(function() {
                     $scope.complete = true;
                     $scope.playing = false;
                     $scope.continue = false;
+                    $scope.time = time;
                 });
             });
         }
@@ -140,8 +142,8 @@
 (function(angular, $) {
     'use strict';
 
-    angular.module('webApp').factory('puzzleFactory', ['$rootScope', '$window',
-        function($rootScope, $window) {
+    angular.module('webApp').factory('puzzleFactory', ['$rootScope', '$window', 'puzzleSaveService', 'puzzleTimerService',
+        function($rootScope, $window, saver, timer) {
             function Puzzle(rows, pieces, width, board) {
                 // our puzzle attributes
                 this.rows = rows;
@@ -149,12 +151,13 @@
                 this.width = width;
                 this.board = board;
 	            this.size = this.width / this.rows;
+                this.moves = 0;
+                this.time = 0;
 
                 // our working DOM items and data
                 this.container = null;
                 this.startingOrder = [];
                 this.shuffledOrder = [];
-                this.moves = 0;
 
                 this.getContainer = function() {
                     return this.container;
@@ -165,21 +168,7 @@
                  * and current board positons of our puzzle pieces
                  */
                 this.save = function() {
-                    var positions = [];
-                    // take a snapshot of our current board state
-                    var currentBoard = [].slice.call(this.container[0].children);
-                    currentBoard.forEach(function(current) {
-                        // check the position of each piece against the starting order
-                        // so we can reinstate the pieces position from its location 
-                        // in the start order
-                        var shuffledPosition = this.startingOrder.indexOf(current);
-                        positions.push(shuffledPosition);
-                    }, this);
-                    var state = {
-                        positions: positions,
-                        moves: this.moves
-                    }
-                    $window.localStorage['isentia.puzzle'] = JSON.stringify(state);
+                    saver.save([].slice.call(this.container[0].children), this.startingOrder, this.moves, timer.time() + this.time);
                 }
 
                 /**
@@ -187,8 +176,9 @@
                  * the previous data to our game board
                  */
                 this.retrieve = function() {
-                    var state = JSON.parse($window.localStorage['isentia.puzzle']);
+                    var state = saver.retrieve();
                     this.moves = state.moves;
+                    this.time = state.time;
                     this.createPieceOrder(state.positions);
                     this.position();
                 }
@@ -320,6 +310,7 @@
                     stop: this.move.bind(this) // we must check the new order agains our start order
                 });
                 $('.puzzle-board').disableSelection();
+                timer.start();
             }
 
             /**
@@ -337,6 +328,7 @@
                 // check if puzzle has been completed and cancel sorting
                 // operations if it has
                 if (this.complete()) {
+                    timer.stop();
                     // reset our internals
                     this.moves = 0;
                     $window.localStorage.removeItem('isentia.puzzle');
@@ -345,7 +337,8 @@
                     $('.puzzle-board').sortable('destroy');
 
                     // notify puzzle completion
-                    $rootScope.$broadcast('puzzle.complete');
+                    var totalTimeTaken = timer.time() + this.time;
+                    $rootScope.$broadcast('puzzle.complete', totalTimeTaken);
                 }
             }
 
@@ -380,6 +373,68 @@
                     return puzzle;
                 }
             };
+        }
+    ]);
+})(window.angular, $);
+(function(angular, $) {
+    'use strict';
+
+    angular.module('webApp').service('puzzleSaveService', ['$window',
+        function($window) {
+            this.save = function(currentBoard, startingOrder, moves, time) {
+                var positions = [];
+                // use snapshot of our current board state
+                currentBoard.forEach(function(current) {
+                    // check the position of each piece against the starting order
+                    // so we can reinstate the pieces position from its location 
+                    // in the start order
+                    var shuffledPosition = startingOrder.indexOf(current);
+                    positions.push(shuffledPosition);
+                });
+                var state = {
+                    positions: positions,
+                    moves: moves,
+                    time: time
+                }
+                $window.localStorage['isentia.puzzle'] = JSON.stringify(state);
+            }
+
+            this.retrieve = function() {
+                return JSON.parse($window.localStorage['isentia.puzzle']);
+            }
+
+            return this;
+        }
+    ]);
+})(window.angular, $);
+(function(angular, $) {
+    'use strict';
+
+    angular.module('webApp').service('puzzleTimerService', ['$window',
+        function($window) {
+            var interval;
+
+            function init() {
+                interval = {};
+            }
+
+            this.start = function() {
+                init();
+                interval.start = moment();
+            }
+
+            this.stop = function() {
+                interval.stop = moment();
+            }
+
+            this.time = function() {
+                // this will be called periodically throughout the game so we need
+                // to make sure we are tracking time of either the interval stop point or the
+                // current time
+                var stop = interval.hasOwnProperty('stop') ? interval.stop : moment();
+                var totalSeconds = stop.diff(interval.start, 'seconds');
+                return totalSeconds;
+            }
         }
     ]);
 })(window.angular, $);
